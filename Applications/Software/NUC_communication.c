@@ -204,6 +204,7 @@ void Scan()
 
 extern float yaw_original_ecd;
 extern float big_yaw_angle;
+int Big_yaw_flag = 0; // 0:不转大yaw，1：转大yaw
 void control_tran()
 {
 	switch(flagman)
@@ -233,68 +234,49 @@ void control_tran()
 		if (gimbal.pitch.now <= -17)
 			TurnOver_pitch = 1;
 	}
+	if(flagdog == 3 && Big_yaw_flag == 0)
+	{
+		flagdog = 0;
+		flagman++;
+		if(flagman > 2)
+		{
+			flagman = 0;
+		}
+	}
 }
 
 void turnbox()
 {
-	if(flagman == 0 || flagman == 1)
+	if (TurnOver_yaw == 1 && gimbal.yaw.encoder_degree <= SCAN_RANGE)
 	{
-				if (TurnOver_yaw == 1 && gimbal.yaw.encoder_degree <= SCAN_RANGE)
-				{
-					if(flagdog == 3)
-					{
-						gimbal.big_yaw_speed = SCAN_BIG_YAW_SPEED;
-						if(fmod(big_yaw_angle,120.0f) <= EPISION)
-						{
-							flagdog = 0;
-						}
-					}
-					gimbal.yaw_speed= SCAN_YAW_SPEED;
-				}
-				else if (TurnOver_yaw == 0 && gimbal.yaw.encoder_degree >= -SCAN_RANGE)
-				{
-					gimbal.yaw_speed= -SCAN_YAW_SPEED;
-				}
-				if (gimbal.yaw.encoder_degree >= SCAN_RANGE)
-				{
-					TurnOver_yaw = 0;
-					flagdog++;
-				}
-				if (gimbal.yaw.encoder_degree <= -SCAN_RANGE)
-				{
-					TurnOver_yaw = 1;
-					flagdog++;
-				}
-		flagman++;
+		if(flagdog == 3)
+		{
+			gimbal.big_yaw_speed = SCAN_BIG_YAW_SPEED;
+			if(fmod(big_yaw_angle,120.0f) <= EPISION)
+			{
+				Big_yaw_flag = 0;
+				gimbal.big_yaw_speed = 0;
+			}
+			else
+			{
+				Big_yaw_flag = 1;
+				gimbal.big_yaw_speed = SCAN_BIG_YAW_SPEED;
+			}
+		}
+	    gimbal.yaw_speed= SCAN_YAW_SPEED;
 	}
-	else
+	else if (TurnOver_yaw == 0 && gimbal.yaw.encoder_degree >= -SCAN_RANGE)
 	{
-				if (TurnOver_yaw == 1 && gimbal.yaw.encoder_degree <= SCAN_RANGE)
-				{
-					if(flagdog == 3)
-					{
-						gimbal.big_yaw_speed = SCAN_BIG_YAW_SPEED;
-						if(fmod(big_yaw_angle,120.0f) <= EPISION)
-						{
-							flagdog = 0;
-						}
-					}
-					gimbal.yaw_speed= SCAN_YAW_SPEED;
-				}
-				else if (TurnOver_yaw == 0 && gimbal.yaw.encoder_degree >= -SCAN_RANGE)
-				{
-					gimbal.yaw_speed= -SCAN_YAW_SPEED;
-				}
-				if (gimbal.yaw.encoder_degree >= SCAN_RANGE)
-				{
-					TurnOver_yaw = 0;
-					flagdog++;
-				}
-				if (gimbal.yaw.encoder_degree <= -SCAN_RANGE)
-				{
-					TurnOver_yaw = 1;
-					flagdog++;
-				}
-		flagman = 0;
+		gimbal.yaw_speed= -SCAN_YAW_SPEED;
+	}
+	if (gimbal.yaw.encoder_degree >= SCAN_RANGE)
+	{
+		TurnOver_yaw = 0;
+		flagdog++;
+	}
+	if (gimbal.yaw.encoder_degree <= -SCAN_RANGE)
+	{
+		TurnOver_yaw = 1;
+		flagdog++;
 	}
 }
