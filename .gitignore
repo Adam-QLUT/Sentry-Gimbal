@@ -1,0 +1,8 @@
+build/
+.history/
+.vscode/
+MDK-ARM/
+!MDK-ARM\RMc_adam_GeneralRobotSystemCode.uvprojx
+RTT/
+Src/
+Inc/
