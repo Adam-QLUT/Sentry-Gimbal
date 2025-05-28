@@ -90,6 +90,10 @@ void shoot_pid_cal(void)
 	{
 		shoot.set_trigger_speed = SHOOT_STOP;
 	}
+		
+		if(get_motor_data(SHOOT_MOTOR2).speed_rpm < 5000)
+				shoot.set_trigger_speed = SHOOT_STOP;
+
 	set_motor(pid_cal(&shoot1_speed_pid, get_motor_data(SHOOT_MOTOR1).speed_rpm, -(float)shoot.speed_level), SHOOT_MOTOR1);
 	set_motor(pid_cal(&shoot2_speed_pid, get_motor_data(SHOOT_MOTOR2).speed_rpm, (float)shoot.speed_level), SHOOT_MOTOR2);
 	set_motor(pid_cal(&trigger_speed_pid, get_motor_data(TRIGGER_MOTOR).speed_rpm, shoot.set_trigger_speed), TRIGGER_MOTOR);

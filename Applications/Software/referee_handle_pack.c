@@ -349,20 +349,20 @@ void Required_Data() //后续可根据需要自行添加
 //		REFEREE_DATA.Chassis_Current =  power_heat_data.chassis_current;  
 //		REFEREE_DATA.Buffer_Energy = power_heat_data.buffer_energy;
 //		REFEREE_DATA.Chassis_Power = power_heat_data.chassis_power; 
-//		REFEREE_DATA.Chassis_Power_Limit = robot_status.chassis_power_limit; 
+		REFEREE_DATA.Chassis_Power_Limit = robot_status.chassis_power_limit; 
 //		REFEREE_DATA.rest_time =	game_status.stage_remain_time;
 //	  //导航相关
 	  REFEREE_DATA.game_progress=game_status.game_progress;//比赛阶段
 	  REFEREE_DATA.game_type=game_status.game_type;//比赛类型
-//	  REFEREE_DATA.blue_base_hp=game_robot_HP.blue_base_HP;
-//  	  REFEREE_DATA.blue_outpost_hp=game_robot_HP.blue_outpost_HP;
-//	  REFEREE_DATA.red_base_hp=game_robot_HP.red_base_HP;
-//	  REFEREE_DATA.red_outpost_hp=game_robot_HP.red_outpost_HP;
+	  REFEREE_DATA.blue_base_hp=game_robot_HP.blue_base_HP;
+  	  REFEREE_DATA.blue_outpost_hp=game_robot_HP.blue_outpost_HP;
+	  REFEREE_DATA.red_base_hp=game_robot_HP.red_base_HP;
+	  REFEREE_DATA.red_outpost_hp=game_robot_HP.red_outpost_HP;
 	  REFEREE_DATA.bullet_remaining_num_17mm=projectile_allowance.projectile_allowance_17mm;//剩余发弹量
 	  REFEREE_DATA.remain_hp=robot_status.current_HP;//机器人当前血量
 	  REFEREE_DATA.stage_remain_time=game_status.stage_remain_time;/*当前阶段剩余时间*/
 	  REFEREE_DATA.rfid_status = rfid_status.rfid_status;//rfid状态
-//		REFEREE_DATA.max_hp=robot_status.maximum_HP;
+		REFEREE_DATA.max_hp=robot_status.maximum_HP;
 	
 }
 
@@ -397,39 +397,68 @@ void referee_data_send()
 
 unsigned char Instruction_buffer_Send[19];
 uint8_t seq = 0;
+ void SendSentryCMD(uint8_t sof,uint16_t cmd_id,uint16_t len)
+ {
+   uint16_t frame_length = frameheader_len + cmd_len + len + crc_len + subcontent_len + send_len + receive_len;   //数据帧长度    
+   uint16_t subcontent_id = 0x0120;
+   uint16_t sender_id = robot_status.robot_id;
+   uint16_t reciiver_id =0x8080;
+   uint32_t content_data =1;
 
-void SendSentryCMD(uint8_t sof,uint16_t cmd_id,uint16_t len)
-{
-  uint16_t frame_length = frameheader_len + cmd_len + len + crc_len;   //数据帧长度    
-  uint16_t subcontent_id = 0x0120;
-  uint16_t sender_id = robot_status.robot_id;
-  uint16_t reciiver_id =0x8080;
-  uint32_t content_data =0x00000001;
-
-  // 清空发送缓冲区，确保数据干净
-    memset(Instruction_buffer_Send,0,frame_length);  //存储数据的数组清零
+   // 清空发送缓冲区，确保数据干净
+     memset(Instruction_buffer_Send,0,19);  //存储数据的数组清零
     
-    /*****帧头打包*****/
-    Instruction_buffer_Send[0] = sof;//数据帧起始字节
-    memcpy(&Instruction_buffer_Send[1],(uint8_t*)&len,2);//数据帧中data的长度
-    Instruction_buffer_Send[3] = seq;//包序号
-    append_CRC8_check_sum(Instruction_buffer_Send,frameheader_len);  //帧头校验CRC8
+     /*****帧头打包*****/
+     Instruction_buffer_Send[0] = sof;//数据帧起始字节
+     memcpy(&Instruction_buffer_Send[1],&len,2);//数据帧中data的长度
+     Instruction_buffer_Send[3] = seq;//包序号
+     append_CRC8_check_sum(Instruction_buffer_Send,frameheader_len);  //帧头校验CRC8
 
-    /*****命令码打包*****/
-    memcpy(&Instruction_buffer_Send[frameheader_len],(uint8_t*)&cmd_id, cmd_len);
+     /*****命令码打包*****/
+     memcpy(&Instruction_buffer_Send[frameheader_len],&cmd_id, cmd_len);
     
-    /*****数据打包*****/
-    memcpy(&Instruction_buffer_Send[frameheader_len+2],(uint8_t*)&subcontent_id, 2);
-    memcpy(&Instruction_buffer_Send[frameheader_len+4],(uint8_t*)&sender_id, 2);
-    memcpy(&Instruction_buffer_Send[frameheader_len+6],(uint8_t*)&reciiver_id, 2);
-    memcpy(&Instruction_buffer_Send[frameheader_len+8],(uint8_t*)&content_data, 4);
+     /*****数据打包*****/
+     memcpy(&Instruction_buffer_Send[frameheader_len+cmd_len],&subcontent_id, subcontent_len);
+     memcpy(&Instruction_buffer_Send[frameheader_len+cmd_len+subcontent_len],&sender_id, send_len);
+     memcpy(&Instruction_buffer_Send[frameheader_len+cmd_len+subcontent_len+send_len],&reciiver_id, receive_len);
+     memcpy(&Instruction_buffer_Send[frameheader_len+cmd_len+subcontent_len+send_len+receive_len],&content_data, len);
 
-    /* CRC16校验 */
-    append_CRC16_check_sum(Instruction_buffer_Send,frame_length);  //一帧数据校验CRC16
+     /* CRC16校验 */
+     append_CRC16_check_sum(Instruction_buffer_Send,frame_length);  //一帧数据校验CRC16
 
-    if (seq == 0xff) seq=0;
-  else seq++;
+     if (seq == 0xff) seq=0;
+   else seq++;
   
-  //    // 使用DMA发送数据
-    HAL_UART_Transmit_DMA(&huart6,Instruction_buffer_Send,19);
-}
+   //    // 使用DMA发送数据
+     HAL_UART_Transmit_DMA(&huart6,Instruction_buffer_Send,19);
+ }
+
+
+//void SendSentryCMD(uint8_t sof,uint16_t cmd_id, uint32_t *p_data, uint16_t len)
+//{
+//  //完整帧长度：帧头，命令码，待发送数据长度，CRC校验长度
+//  uint16_t frame_length = frameheader_len + cmd_len + len + crc_len;   //数据帧长度    
+//  
+//  // 清空发送缓冲区，确保数据干净
+//    memset(Instruction_buffer_Send,0,19);  //存储数据的数组清零
+//    
+//    /*****帧头打包*****/
+//    Instruction_buffer_Send[0] = sof;//数据帧起始字节
+//    memcpy(&Instruction_buffer_Send[1],&len,2);//数据帧中data的长度
+////    memcpy(&Instruction_buffer_Send[1],(uint8_t*)&len,2);
+//    Instruction_buffer_Send[3] = seq;//包序号
+//    append_CRC8_check_sum(Instruction_buffer_Send,frameheader_len);  //帧头校验CRC8
+
+//    /*****命令码打包*****/
+//    memcpy(&Instruction_buffer_Send[5],&cmd_id, 2);
+//    
+//    /*****数据打包*****/
+//    memcpy(&Instruction_buffer_Send[frameheader_len+cmd_len],p_data,len);
+//    append_CRC16_check_sum(Instruction_buffer_Send,frame_length);  //一帧数据校验CRC16
+
+//    if (seq == 0xff) seq=0;
+//  else seq++;
+//  
+//  //    // 使用DMA发送数据
+//    HAL_UART_Transmit_DMA(&huart6,Instruction_buffer_Send,13);
+//}

@@ -22,10 +22,10 @@
 #include "IMU_updata.h"
 #include "CRC8_CRC16.h"
 #include "gimbal.h"
-#include "math.h"
+
 #include "stdio.h"
 
-#define EPISION 0.1
+#define EPISION 0.001f
 
 // 导航使用uart1收发
 STM32ROS_data_t stm32send_1;
@@ -49,7 +49,7 @@ int flagdog = 0;
 void Navigation_send_message()
 {
 	stm32send_1.remain_hp = robot_status.current_HP; // 现在的血量
-	    stm32send_1.max_hp =REFEREE_DATA.max_hp; //最大血量
+	    stm32send_1.max_hp =robot_status.maximum_HP; //最大血量
 //	stm32send_1.max_hp = 0;
 //	stm32send_1.game_type = game_status.game_type; // ��������
 		stm32send_1.game_type = 0; // ��������
@@ -57,11 +57,11 @@ void Navigation_send_message()
 	stm32send_1.game_progress = game_status.game_progress;
 	stm32send_1.stage_remain_time = game_status.stage_remain_time; // ��ǰ�׶�ʣ��ʱ��
 	stm32send_1.bullet_remaining_num_17mm = projectile_allowance.projectile_allowance_17mm;
-	stm32send_1.red_outpost_hp = REFEREE_DATA.red_outpost_hp;
+	stm32send_1.red_outpost_hp = game_robot_HP.red_outpost_HP;
 	//	stm32send_1.red_base_hp = REFEREE_DATA.red_base_hp;
-	stm32send_1.red_base_hp = REFEREE_DATA.red_base_hp;
+	stm32send_1.red_base_hp = game_robot_HP.red_base_HP;
   
-	stm32send_1.blue_outpost_hp = REFEREE_DATA.blue_outpost_hp;
+	stm32send_1.blue_outpost_hp = game_robot_HP.blue_outpost_HP;
 	//	stm32send_1.blue_base_hp = REFEREE_DATA.blue_base_hp;
 	stm32send_1.blue_base_hp = REFEREE_DATA.blue_base_hp;
 	stm32send_1.rfid_status = rfid_status.rfid_status;
@@ -120,7 +120,7 @@ void STM32_to_MINIPC()
     toMINIPC.To_minipc_data.autoaim = 1;
   if (
         
-        REFEREE_DATA.robot_id >= 100)
+        robot_status.robot_id >= 100)
         toMINIPC.To_minipc_data.enemy_color = 1;
     else
         toMINIPC.To_minipc_data.enemy_color = 0;
@@ -153,15 +153,14 @@ void Auto_control()
 		gimbal.speed_mode = 0;
 //		if(WaitTime>TimeOut-1.5)
 //	     Global.Auto.input.fire=0;
-		if ((Get_sys_time_s() - WaitTime) > 1/100)
+		if ((Get_sys_time_s() - WaitTime) > 1/100.0f)
 			Global.Auto.input.fire=0;
 		}
 	
 	
 		else
 		{
-			//Scan();
-			control_tran();
+			Scan();
 			gimbal.speed_mode = 1;
 		}
 }
@@ -201,6 +200,7 @@ void Scan()
 			TurnOver_pitch = 1;
 	}
 }
+
 
 extern float yaw_original_ecd;
 extern float big_yaw_angle;

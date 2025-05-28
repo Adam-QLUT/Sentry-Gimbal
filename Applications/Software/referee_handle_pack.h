@@ -10,6 +10,9 @@
 #define frameheader_len  5       //帧头长度
 #define cmd_len          2       //命令码长度
 #define crc_len          2       //CRC16校验
+#define subcontent_len   2
+#define send_len         2
+#define receive_len      2
 
 typedef struct//自定义结构体，需在函数中赋值，然后在 FREERTOS 里调用  后续可根据需要自行添加
 {

@@ -180,19 +180,19 @@ void get_global_chassis_input()
 		{
 		chassis.speed.x = 0;
 		chassis.speed.y = 0;
-//		if((REFEREE_DATA.remain_hp >= Last_Hp && Get_sys_time_s() - Hp_Time_Wait > 5) || cap .remain_vol < 16)//没受到攻击就转的慢点
-//		{
-//			chassis.speed.r = 14.5f;//Slope_Cal(&spin_r_slope,chassis.speed.now_r,random_anti_vision_r_s(10.5,16.5));//random_anti_vision_r_s(10.5,16.5);
-//			
-//		}
-//		else//检测到掉血就高速或者变速
-//		{
-//			if(chassis.speed.r == 5.0f)//random_anti_vision_r_s(10.5,16.5))
-//			Hp_Time_Wait = Get_sys_time_s();
-//			chassis.speed.r = 10;
+		if((REFEREE_DATA.remain_hp >= Last_Hp && Get_sys_time_s() - Hp_Time_Wait > 5) || cap .remain_vol < 16)//没受到攻击就转的慢点
+		{
+			chassis.speed.r = Slope_Cal(&spin_r_slope,chassis.speed.now_r,random_anti_vision_r_s(10.5,16.5));//Slope_Cal(&spin_r_slope,chassis.speed.now_r,random_anti_vision_r_s(10.5,16.5));//random_anti_vision_r_s(10.5,16.5);
+			
+		}
+		else//检测到掉血就高速或者变速
+		{
+			if(chassis.speed.r == Slope_Cal(&spin_r_slope,chassis.speed.now_r,random_anti_vision_r_s(10.5,16.5)))//random_anti_vision_r_s(10.5,16.5))
+			Hp_Time_Wait = Get_sys_time_s();
+			chassis.speed.r = 16.5;
 
-//		}
-			chassis.speed.r = 0.0f;
+		}
+//			chassis.speed.r = 0.0f;
 		chassis.speed.now_r = chassis.speed.r; 
 		Last_Hp = REFEREE_DATA.remain_hp;
 			Navigation_receive_1.header = 0;
